@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.wordsapp
+package com.example.wordsapp.adapter
 
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
@@ -24,54 +26,73 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Button
 import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
+import com.example.wordsapp.activity.DetailActivity
+import com.example.wordsapp.R
 
 /**
- * Adapter for the [RecyclerView] in [MainActivity].
+ * Adapter for the [RecyclerView] in [DetailActivity].
  */
-class LetterAdapter :
-    RecyclerView.Adapter<LetterAdapter.LetterViewHolder>() {
+class WordAdapter(private val letterId: String, context: Context) :
+    RecyclerView.Adapter<WordAdapter.WordViewHolder>() {
 
-    // Generates a [CharRange] from 'A' to 'Z' and converts it to a list
-    private val list = ('A').rangeTo('Z').toList()
+    private val filteredWords: List<String>
 
-    /**
-     * Provides a reference for the views needed to display items in your list.
-     */
-    class LetterViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+    init {
+        // Retrieve the list of words from res/values/arrays.xml
+        val words = context.resources.getStringArray(R.array.words).toList()
+
+        filteredWords = words
+            // Returns items in a collection if the conditional clause is true,
+            // in this case if an item starts with the given letter,
+            // ignoring UPPERCASE or lowercase.
+            .filter { it.startsWith(letterId, ignoreCase = true) }
+            // Returns a collection that it has shuffled in place
+            .shuffled()
+            // Returns the first n items as a [List]
+            .take(5)
+            // Returns a sorted version of that [List]
+            .sorted()
+    }
+
+    class WordViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         val button = view.findViewById<Button>(R.id.button_item)
     }
 
-    override fun getItemCount(): Int {
-        return list.size
-    }
+    override fun getItemCount(): Int = filteredWords.size
 
     /**
      * Creates new views with R.layout.item_view as its template
      */
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LetterViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WordViewHolder {
         val layout = LayoutInflater
-                .from(parent.context)
-                .inflate(R.layout.item_view, parent, false)
+            .from(parent.context)
+            .inflate(R.layout.item_view, parent, false)
+
         // Setup custom accessibility delegate to set the text read
-        layout.accessibilityDelegate = Accessibility
-        return LetterViewHolder(layout)
+        layout.accessibilityDelegate = LetterAdapter
+
+        return WordViewHolder(layout)
     }
 
     /**
      * Replaces the content of an existing view with new data
      */
-    override fun onBindViewHolder(holder: LetterViewHolder, position: Int) {
-        val item = list.get(position)
-        holder.button.text = item.toString()
+    override fun onBindViewHolder(holder: WordViewHolder, position: Int) {
+
+        val item = filteredWords[position]
+        // Needed to call startActivity
+        val context = holder.view.context
+
+        // Set the text of the WordViewHolder
+        holder.button.text = item
 
         holder.button.setOnClickListener {
-            val context = holder.view.context
-            val intent  = Intent(context, DetailActivity::class.java)
-            intent.putExtra(DetailActivity.LETTER, holder.button.text.toString())
+            val queryUrl: Uri = Uri.parse("${DetailActivity.SEARCH_PREFIX}$item")
+            val intent = Intent(Intent.ACTION_VIEW, queryUrl)
             context.startActivity(intent)
         }
-    }
 
+    }
     // Setup custom accessibility delegate to set the text read with
     // an accessibility service
     companion object Accessibility : View.AccessibilityDelegate() {
@@ -85,7 +106,7 @@ class LetterAdapter :
             // accessibility service announces "double tap to activate".
             // If a custom string is provided,
             // it announces "double tap to <custom string>".
-            val customString = host?.context?.getString(R.string.look_up_words)
+            val customString = host?.context?.getString(R.string.look_up_word)
             val customClick =
                 AccessibilityNodeInfo.AccessibilityAction(
                     AccessibilityNodeInfo.ACTION_CLICK,

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.wordsapp
+package com.example.wordsapp.activity
 
 import android.os.Bundle
 import android.view.Menu
@@ -23,6 +23,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.wordsapp.R
+import com.example.wordsapp.adapter.LetterAdapter
 import com.example.wordsapp.databinding.ActivityMainBinding
 
 /**
